@@ -1,13 +1,24 @@
 (function (w) {
-  if (!w.MediaQueryList) return;
+  function getProto() {
+    if (w.MediaQueryList) {
+      return w.MediaQueryList.prototype;
+    }
+    if (typeof w.matchMedia === "function") {
+      const mql = w.matchMedia("all");
+      return Object.getPrototypeOf(mql);
+    }
+  }
+  const proto = getProto();
 
-  w.MediaQueryList.prototype.addEventListener = w.MediaQueryList.prototype.addEventListener ||
+  if (!proto) return;
+
+  proto.addEventListener = proto.addEventListener ||
     function (e /* change */, l) {
-      w.MediaQueryList.prototype.addListener.call(this, l);
+      proto.addListener.call(this, l);
     };
 
-  w.MediaQueryList.prototype.removeEventListener = w.MediaQueryList.prototype.removeEventListener ||
+  proto.removeEventListener = proto.removeEventListener ||
     function (e /* change */, l) {
-      w.MediaQueryList.prototype.removeListener.call(this, l);
+      proto.removeListener.call(this, l);
     }
 })(window);
