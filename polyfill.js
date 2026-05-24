@@ -12,13 +12,37 @@
 
   if (!proto) return;
 
-  proto.addEventListener = proto.addEventListener ||
-    function (e /* change */, l) {
-      proto.addListener.call(this, l);
+  const wrappers = new WeakMap();
+
+  proto.addEventListener =
+    proto.addEventListener ||
+    function (type, listener) {
+      if (type !== "change") return;
+
+      if (typeof listener === "function") {
+        proto.addListener.call(this, listener);
+      } else {
+        let wrapper = wrappers.get(listener);
+        if (!wrapper) {
+          wrapper = (ev) => listener.handleEvent(ev);
+          wrappers.set(listener, wrapper);
+        }
+        proto.addListener.call(this, wrapper);
+      }
     };
 
-  proto.removeEventListener = proto.removeEventListener ||
-    function (e /* change */, l) {
-      proto.removeListener.call(this, l);
-    }
+  proto.removeEventListener =
+    proto.removeEventListener ||
+    function (type, listener) {
+      if (type !== "change") return;
+      if (typeof listener === "function") {
+        proto.removeListener.call(this, listener);
+      } else {
+        const wrapper = wrappers.get(listener);
+        if (!wrapper) {
+          return;
+        }
+        proto.removeListener.call(this, wrapper);
+      }
+    };
 })(window);
