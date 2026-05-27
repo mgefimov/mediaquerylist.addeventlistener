@@ -24,6 +24,13 @@ import 'mediaquerylist.addeventlistener/polyfill';
 <script src="https://unpkg.com/mediaquerylist.addeventlistener@1.0.0/polyfill.js"></script>
 ```
 
+## Development
+
+```bash
+npm test       # run the Jest test suite
+npm run serve  # serve the live demo
+```
+
 ## LICENSE
 
 MIT

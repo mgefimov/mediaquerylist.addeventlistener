@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaQueryList.addEventListener polyfill — live demo</title>
+    <script src="../polyfill.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 16px; }
+        h1 { font-size: 18px; }
+        pre { background: #f3f3f3; border-radius: 6px; padding: 12px; white-space: pre-wrap; font-size: 13px; }
+        button { padding: 10px 16px; font-size: 15px; border: none; border-radius: 6px; background: #007aff; color: #fff; margin: 0 6px 6px 0; }
+        button:disabled { background: #b0b0b0; }
+        .note { font-size: 12px; color: #555; }
+        code { background: #ececec; border-radius: 3px; padding: 1px 4px; }
+    </style>
+</head>
+
+<body>
+    <h1>MediaQueryList.addEventListener polyfill — live demo</h1>
+
+    <p class="note">Rotate the device (portrait ↔ landscape) to fire the listeners below — this flips on
+        every rotation regardless of screen size. (Toggling system Dark Mode also works if you swap the
+        query to <code>(prefers-color-scheme: dark)</code>.)</p>
+
+    <p class="note">Four listeners are registered, demonstrating the supported
+        <a href="https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener">options</a>:
+        a plain <strong>function</strong>, an <strong>object</strong> with <code>handleEvent</code>,
+        one added with <code>{ once: true }</code> (fires only on the first change, then auto-removes),
+        and one added with <code>{ signal }</code> (fires until you abort it).</p>
+
+    <p>
+        <button id="removeBtn">Remove function + object listeners</button>
+        <button id="abortBtn">Abort signal listener</button>
+    </p>
+    <pre id="live"></pre>
+
+    <p class="note">Automated tests live in <code>test/polyfill.test.js</code> — run <code>npm test</code>.</p>
+
+    <script>
+        var live = document.getElementById('live');
+        function liveLog(s) {
+            var t = new Date().toLocaleTimeString();
+            live.textContent = '[' + t + '] ' + s + '\n' + live.textContent;
+        }
+
+        var query = '(orientation: portrait)';
+        var mql = matchMedia(query);
+        liveLog('addEventListener present: ' + (typeof mql.addEventListener === 'function'));
+        liveLog('initial ' + query + ' matches = ' + mql.matches);
+
+        // 1) plain function listener — fires on every change
+        var fnListener = function (e) { liveLog('FUNCTION listener fired — matches=' + e.matches); };
+        mql.addEventListener('change', fnListener);
+
+        // 2) object listener (handleEvent) — fires on every change
+        var objListener = { handleEvent: function (e) { liveLog('OBJECT listener (handleEvent) fired — matches=' + e.matches); } };
+        mql.addEventListener('change', objListener);
+
+        // 3) { once: true } — fires only on the first change, then auto-removes
+        mql.addEventListener('change', function (e) {
+            liveLog('ONCE listener fired — matches=' + e.matches + '  (auto-removed; will not fire again)');
+        }, { once: true });
+
+        // 4) { signal } — fires until the AbortController is aborted
+        var abortBtn = document.getElementById('abortBtn');
+        if (typeof AbortController !== 'undefined') {
+            var controller = new AbortController();
+            mql.addEventListener('change', function (e) {
+                liveLog('SIGNAL listener fired — matches=' + e.matches);
+            }, { signal: controller.signal });
+
+            abortBtn.addEventListener('click', function () {
+                controller.abort();
+                liveLog('aborted signal — SIGNAL listener removed');
+                abortBtn.disabled = true;
+            });
+        } else {
+            abortBtn.disabled = true;
+            liveLog('AbortController unavailable — { signal } option not demonstrated');
+        }
+
+        // Remove the function + object listeners on demand.
+        document.getElementById('removeBtn').addEventListener('click', function () {
+            mql.removeEventListener('change', fnListener);
+            mql.removeEventListener('change', objListener);
+            liveLog('removed FUNCTION + OBJECT listeners');
+        });
+    </script>
+</body>
+
+</html>

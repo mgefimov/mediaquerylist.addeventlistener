@@ -5,5 +5,12 @@
   "exports": {
     "./polyfill": "./polyfill.js",
     "./package.json": "./package.json"
+  },
+  "scripts": {
+    "serve": "npx serve demo",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2"
   }
 }
